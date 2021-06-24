@@ -1,4 +1,5 @@
-# config
+# low-resource-computer-dotfiles
+
 
 ## About
 - This are some configuration files for a basic Arch Linux setup. Use them as reference to create your own setup with the programs you like.
