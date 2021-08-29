@@ -1,1 +1,31 @@
-  "coc.preferences.formatOnSaveFiletypes": ["css", "markdown"],
+{
+  "tsserver.formatOnType": true,
+  "coc.preferences.formatOnType": true,
+  "coc.preferences.formatOnSaveFiletypes": [
+    "html",
+    "css",
+    "c",
+    "go",
+    "python",
+    "rust",
+    "markdown",
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "json",
+    "jsonc"
+  ],
+  "eslint.format.enable": true,
+  "eslint.packageManager": "npm",
+  "snippets.extends": {
+    "javascriptreact": ["javascript"],
+    "typescript": ["javascript"]
+  },
+
+  "javascript.autoClosingTags": true,
+  "typescript.format.semicolons": "ignore",
+  "typescript.autoClosingTags": true,
+  "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": true,
+  "typescript.preferences.useAliasesForRenames": false
+}

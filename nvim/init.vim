@@ -49,23 +49,24 @@ let g:NERDTreeGitStatusIndicatorMapCustom = {
 
 " Top Tab. Automatically displays all buffers when there's only one tab open.
 let g:airline#extensions#tabline#enabled = 1
-" 
-let g:airline_theme='bubblegum'
+let g:airline_theme='ayu'
+
+
+" -------------------- Prettier --------------------
 " Prettier auto save.
-" let g:prettier#autoformat = 0
-" let g:prettier#quickfix_enabled = 0
-" autocmd BufWritePre *.js,*.jsx,*.mjs,*.ts,*.tsx,*.css,*.less,*.scss,*.json,*.graphql,*.md,*.vue PrettierAsync
+let g:prettier#autoformat = 0
+
+" let g:prettier#quickfix_enabl nred = 0
+autocmd BufWritePre *.js,*.jsx,*.mjs,*.ts,*.tsx,*.css,*.less,*.scss,*.json,*.graphql,*.md,*.vue PrettierAsync
 " command! -nargs=0 Prettier :call CocAction('runCommand', 'prettier.formatFile')
 
-" ALE
-let g:ale_fixers = {
- \ 'javascript': ['prettier'],
- \ 'css': ['prettier'],
- \ 'html': ['prettier'],
- \ }
-let g:ale_sign_error = '❌'
-let g:ale_sign_warning = '⚠️'
-let g:ale_fix_on_save = 1
+" FORMATTERS
+au FileType javascript setlocal formatprg=prettier
+au FileType javascript.jsx setlocal formatprg=prettier
+au FileType typescript setlocal formatprg=prettier\ --parser\ typescript
+au FileType html setlocal formatprg=js-beautify\ --type\ html
+au FileType scss setlocal formatprg=prettier\ --parser\ css
+au FileType css setlocal formatprg=prettier\ --parser\ css
 
 " -------------------- Plugins --------------------
 call plug#begin('~/.local/share/nvim/plugged')
@@ -92,15 +93,12 @@ Plug 'honza/vim-snippets'
 Plug 'mattn/emmet-vim'
 Plug 'alvan/vim-closetag'
 Plug 'chun-yang/auto-pairs'
-Plug 'dense-analysis/ale'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
+let g:coc_global_extensions = [
+  \ 'coc-tsserver'
+  \ ]
 Plug 'neoclide/coc.nvim', {'do': 'yarn install --frozen-lockfile'}
-
-"Plug 'shutnik/jshint2.vim'
-" post install (yarn install | npm install) then load plugin only for editing supported files
-"Plug 'prettier/vim-prettier', {
-"  \ 'do': 'yarn install',
-"  \ 'for': ['javascript', 'typescript', 'css', 'less', 'scss', 'json', 'graphql', 'markdown', 'vue', 'svelte', 'yaml', 'html'] }
+Plug 'prettier/vim-prettier', { 'do': 'yarn install' }
 
 " Visual
 Plug 'yggdroot/indentline'
@@ -116,18 +114,57 @@ Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-rhubarb'
 Plug 'junegunn/gv.vim'
 
+" TypeScript and React Development
+Plug 'pangloss/vim-javascript'
+Plug 'leafgarland/typescript-vim'
+Plug 'peitalin/vim-jsx-typescript'
+Plug 'styled-components/vim-styled-components', { 'branch': 'main' }
+Plug 'jparise/vim-graphql'
+
 call plug#end()
+
+" -------------------- TypeScript and React Development --------------------
+autocmd BufEnter *.{js,jsx,ts,tsx} :syntax sync fromstart
+autocmd BufLeave *.{js,jsx,ts,tsx} :syntax sync clear
+
+if isdirectory('./node_modules') && isdirectory('./node_modules/prettier')
+  let g:coc_global_extensions += ['coc-prettier']
+endif
+
+if isdirectory('./node_modules') && isdirectory('./node_modules/eslint')
+  let g:coc_global_extensions += ['coc-eslint']
+endif
+
+" Display diagnostics (errors and warnings)
+function! ShowDocIfNoDiagnostic(timer_id)
+  if (coc#float#has_float() == 0 && CocHasProvider('hover') == 1)
+    silent call CocActionAsync('doHover')
+  endif
+endfunction
+
+function! s:show_hover_doc()
+  call timer_start(500, 'ShowDocIfNoDiagnostic')
+endfunction
+
+autocmd CursorHoldI * :call <SID>show_hover_doc()
+autocmd CursorHold * :call <SID>show_hover_doc()
+
+" Go to actions
+nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gy <Plug>(coc-type-definition)
+nmap <silent> gr <Plug>(coc-references)
+nmap <leader>do <Plug>(coc-codeaction)
 
 " -------------------- Themes config --------------------
 " colorscheme tokyonight
 " let g:tokyonight_style = "night"
 " let g:tokyonight_italic_functions = 1
 " let g:tokyonight_sidebars = [ "qf", "vista_kind", "terminal", "packer" ]
-set background=dark
-let ayucolor="mirage"
-let g:gruvbox_contrast_dark="hard"
+" set background=dark
+" let g:gruvbox_contrast_dark="hard"
+let ayucolor="dark"
 " colorscheme onedark
-colorscheme gruvbox
+colorscheme ayu
 
 " -------------------- Shortcuts --------------------
 let mapleader = " "
@@ -152,6 +189,18 @@ vmap <F6> :source ~/.config/nvim/init.vim<CR>
 
 " Save
 nmap <leader>w :w<CR>
+
+" Rename file
+function! RenameFile()
+    let old_name = expand('%')
+    let new_name = input('New file name: ', expand('%'), 'file')
+    if new_name != '' && new_name != old_name
+        exec ':saveas ' . new_name
+        exec ':silent !rm ' . old_name
+        redraw!
+    endif
+endfunction
+map <leader>n :call RenameFile()<cr>
 
 " Split vertical de terminal
 vnoremap <c-t> :split<CR>:ter<CR>:resize 15<CR>
@@ -186,25 +235,3 @@ nnoremap <leader>sp :sp<CR>
 nmap <F5> i<C-R>=strftime("%Y-%m-%d %a %I:%M %p")<CR><Esc>
 imap <F5> <C-R>=strftime("%Y-%m-%d %a %I:%M %p")<CR>
 
-"Prettier
-command! -nargs=0 Prettier :CocCommand prettier.formatFile
-vmap <leader>f  <Plug>(coc-format-selected)
-nmap <leader>f  <Plug>(coc-format-selected)
-
-" ------------------- JSHint -------------------
-" Lint JavaScript files after reading it.
-" let jshint2_read = 1
-" jshint validation
-" nnoremap <silent><F2> :JSHint<CR>
-" inoremap <silent><F2> <C-O>:JSHint<CR>
-" vnoremap <silent><F2> :JSHint<CR>
-
-" show next jshint error
-" nnoremap <silent><F3> :lnext<CR>
-" inoremap <silent><F3> <C-O>:lnext<CR>
-" vnoremap <silent><F3> :lnext<CR>
-
-" show previous jshint error
-" nnoremap <silent><F4> :lprevious<CR>
-" inoremap <silent><F4> <C-O>:lprevious<CR>
-" vnoremap <silent><F4> :lprevious<CR>
